@@ -16,6 +16,10 @@ type Network struct {
 	learningRate  float64
 }
 
+func sigmoid(r, c int, z float64) float64 {
+	return 1.0 / (1 + math.Exp(-1*z))
+}
+
 func CreateNetwork(input, hidden, output int, rate float64) (net Network) {
 	net = Network{
 		inputs:       input,
@@ -39,4 +43,37 @@ func randomArray(size int, v float64) (data []float64) {
 		data[i] = dist.Rand()
 	}
 	return
+}
+
+func (net Network) Predict(inputData []float64) mat.Matrix {
+
+	inputs := mat.NewDense(len(inputData), 1, inputData)
+	hiddenInputs := dot(net.hiddenWeights, inputs)
+	hiddenOutputs := apply(sigmoid, hiddenInputs)
+	finalInputs := dot(net.outputWeights, hiddenOutputs)
+	finalOutputs := apply(sigmoid, finalInputs)
+	return finalOutputs
+}
+
+func (net *Network) Train(inputData []float64, targetData []float64) {
+
+	inputs := mat.NewDense(len(inputData), 1, inputData)
+	hiddenInputs := dot(net.hiddenWeights, inputs)
+	hiddenOutputs := apply(sigmoid, hiddenInputs)
+	finalInputs := dot(net.outputWeights, hiddenOutputs)
+	finalOutputs := apply(sigmoid, finalInputs)
+
+	targets := mat.NewDense(len(targetData), 1, targetData)
+	outputErrors := subtract(targets, finalOutputs)
+	hiddenErrors := dot(net.outputWeights.T(), outputErrors)
+
+	net.outputWeights = add(net.outputWeights,
+		scale(net.learningRate,
+			dot(multiply(outputErrors, sigmoidPrime(finalOutputs)),
+				hiddenOutputs.T()))).(*mat.Dense)
+
+	net.hiddenWeights = add(net.hiddenWeights,
+		scale(net.learningRate,
+			dot(multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
+				inputs.T()))).(*mat.Dense)
 }
