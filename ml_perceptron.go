@@ -77,3 +77,13 @@ func (net *Network) Train(inputData []float64, targetData []float64) {
 			dot(multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
 				inputs.T()))).(*mat.Dense)
 }
+
+func sigmoidPrime(m mat.Matrix) mat.Matrix {
+	rows, _ := m.Dims()
+	o := make([]float64, rows)
+	for i := range o {
+		o[i] = 1
+	}
+	ones := mat.NewDense(rows, 1, o)
+	return multiply(m, subtract(ones, m)) // m * (1 - m)
+}
