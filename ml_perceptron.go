@@ -47,10 +47,19 @@ func randomArray(size int, v float64) (data []float64) {
 
 func (net Network) Predict(inputData []float64) mat.Matrix {
 
+	//creates a matrix with nuerons for each input put into rows and a single column
 	inputs := mat.NewDense(len(inputData), 1, inputData)
+
+	//the hidden inputs are calculated by getting the dot product of the weights and the inputs
 	hiddenInputs := dot(net.hiddenWeights, inputs)
+
+	//the outputs are gotten by apply the sigmoid activation function to the inputs
 	hiddenOutputs := apply(sigmoid, hiddenInputs)
+
+	//the same dot product operation is done on the outputs
 	finalInputs := dot(net.outputWeights, hiddenOutputs)
+
+	//finally the sigmoid function is applied to the outputs
 	finalOutputs := apply(sigmoid, finalInputs)
 	return finalOutputs
 }
@@ -63,15 +72,23 @@ func (net *Network) Train(inputData []float64, targetData []float64) {
 	finalInputs := dot(net.outputWeights, hiddenOutputs)
 	finalOutputs := apply(sigmoid, finalInputs)
 
+	//get the errors
 	targets := mat.NewDense(len(targetData), 1, targetData)
+
+	//subtracts each target value from the final outputs
 	outputErrors := subtract(targets, finalOutputs)
+
+	//gets the errors of the weights by getting the dot product of the weights by the output error
 	hiddenErrors := dot(net.outputWeights.T(), outputErrors)
 
+	//change the weights by scaling them at a rate following the formula:
+	//	Δwjk = -l.(tk-ok)·ok(1-ok)·oj
 	net.outputWeights = add(net.outputWeights,
 		scale(net.learningRate,
 			dot(multiply(outputErrors, sigmoidPrime(finalOutputs)),
 				hiddenOutputs.T()))).(*mat.Dense)
 
+	//so the same for the hidden weights
 	net.hiddenWeights = add(net.hiddenWeights,
 		scale(net.learningRate,
 			dot(multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
