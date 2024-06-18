@@ -1,7 +1,8 @@
-package nueralnetwork
+package main
 
 import (
 	"math"
+	"os"
 
 	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/gonum/stat/distuv"
@@ -50,48 +51,48 @@ func (net Network) Predict(inputData []float64) mat.Matrix {
 	//creates a matrix with nuerons for each input put into rows and a single column
 	inputs := mat.NewDense(len(inputData), 1, inputData)
 
-	//the hidden inputs are calculated by getting the dot product of the weights and the inputs
-	hiddenInputs := dot(net.hiddenWeights, inputs)
+	//the hidden inputs are calculated by getting the Dot product of the weights and the inputs
+	hiddenInputs := Dot(net.hiddenWeights, inputs)
 
-	//the outputs are gotten by apply the sigmoid activation function to the inputs
-	hiddenOutputs := apply(sigmoid, hiddenInputs)
+	//the outputs are gotten by Apply the sigmoid activation function to the inputs
+	hiddenOutputs := Apply(sigmoid, hiddenInputs)
 
-	//the same dot product operation is done on the outputs
-	finalInputs := dot(net.outputWeights, hiddenOutputs)
+	//the same Dot product operation is done on the outputs
+	finalInputs := Dot(net.outputWeights, hiddenOutputs)
 
 	//finally the sigmoid function is applied to the outputs
-	finalOutputs := apply(sigmoid, finalInputs)
+	finalOutputs := Apply(sigmoid, finalInputs)
 	return finalOutputs
 }
 
 func (net *Network) Train(inputData []float64, targetData []float64) {
 
 	inputs := mat.NewDense(len(inputData), 1, inputData)
-	hiddenInputs := dot(net.hiddenWeights, inputs)
-	hiddenOutputs := apply(sigmoid, hiddenInputs)
-	finalInputs := dot(net.outputWeights, hiddenOutputs)
-	finalOutputs := apply(sigmoid, finalInputs)
+	hiddenInputs := Dot(net.hiddenWeights, inputs)
+	hiddenOutputs := Apply(sigmoid, hiddenInputs)
+	finalInputs := Dot(net.outputWeights, hiddenOutputs)
+	finalOutputs := Apply(sigmoid, finalInputs)
 
 	//get the errors
 	targets := mat.NewDense(len(targetData), 1, targetData)
 
-	//subtracts each target value from the final outputs
-	outputErrors := subtract(targets, finalOutputs)
+	//Subtracts each target value from the final outputs
+	outputErrors := Subtract(targets, finalOutputs)
 
-	//gets the errors of the weights by getting the dot product of the weights by the output error
-	hiddenErrors := dot(net.outputWeights.T(), outputErrors)
+	//gets the errors of the weights by getting the Dot product of the weights by the output error
+	hiddenErrors := Dot(net.outputWeights.T(), outputErrors)
 
 	//change the weights by scaling them at a rate following the formula:
 	//	Δwjk = -l.(tk-ok)·ok(1-ok)·oj
-	net.outputWeights = add(net.outputWeights,
-		scale(net.learningRate,
-			dot(multiply(outputErrors, sigmoidPrime(finalOutputs)),
+	net.outputWeights = Add(net.outputWeights,
+		Scale(net.learningRate,
+			Dot(Multiply(outputErrors, sigmoidPrime(finalOutputs)),
 				hiddenOutputs.T()))).(*mat.Dense)
 
 	//so the same for the hidden weights
-	net.hiddenWeights = add(net.hiddenWeights,
-		scale(net.learningRate,
-			dot(multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
+	net.hiddenWeights = Add(net.hiddenWeights,
+		Scale(net.learningRate,
+			Dot(Multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
 				inputs.T()))).(*mat.Dense)
 }
 
@@ -102,5 +103,34 @@ func sigmoidPrime(m mat.Matrix) mat.Matrix {
 		o[i] = 1
 	}
 	ones := mat.NewDense(rows, 1, o)
-	return multiply(m, subtract(ones, m)) // m * (1 - m)
+	return Multiply(m, Subtract(ones, m)) // m * (1 - m)
+}
+
+func save(net Network) {
+	h, err := os.Create("data/outputweights.model")
+	defer h.Close()
+	if err == nil {
+		net.hiddenWeights.MarshalBinaryTo(h)
+	}
+	o, err := os.Create("data/outputweights.model")
+	defer o.Close()
+	if err == nil {
+		net.outputWeights.MarshalBinaryTo(o)
+	}
+}
+
+func load(net *Network) {
+	h, err := os.Open("data/hiddenweights.model")
+	defer h.Close()
+	if err == nil {
+		net.hiddenWeights.Reset()
+		net.hiddenWeights.UnmarshalBinaryFrom(h)
+	}
+	o, err := os.Open("data/outputweights.model")
+	defer o.Close()
+	if err == nil {
+		net.outputWeights.Reset()
+		net.outputWeights.UnmarshalBinaryFrom(o)
+	}
+	return
 }
