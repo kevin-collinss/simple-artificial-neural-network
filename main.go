@@ -2,9 +2,13 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/base64"
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"image"
+	"image/png"
 	"io"
 	"math/rand"
 	"os"
@@ -14,12 +18,13 @@ import (
 
 func main() {
 	// 784 inputs - 28 x 28 pixels, each pixel is an input
-	// 200 hidden neurons - an arbitrary number
+	// 100 hidden nodes - an arbitrary number
 	// 10 outputs - digits 0 to 9
 	// 0.1 is the learning rate
 	net := CreateNetwork(784, 200, 10, 0.1)
 
 	mnist := flag.String("mnist", "", "Either train or predict to evaluate neural network")
+	file := flag.String("file", "", "File name of 28 x 28 PNG file to evaluate")
 	flag.Parse()
 
 	// train or mass predict to determine the effectiveness of the trained network
@@ -32,6 +37,16 @@ func main() {
 		mnistPredict(&net)
 	default:
 		// don't do anything
+	}
+
+	// predict individual digit images
+	if *file != "" {
+		// print the image out nicely on the terminal
+		printImage(getImage(*file))
+		// load the neural network from file
+		load(&net)
+		// predict which number it is
+		fmt.Println("prediction:", predictFromImage(net, *file))
 	}
 }
 
@@ -106,4 +121,24 @@ func mnistPredict(net *Network) {
 	elapsed := time.Since(t1)
 	fmt.Printf("Time taken to check: %s\n", elapsed)
 	fmt.Println("score:", score)
+}
+
+func printImage(img image.Image) {
+	var buf bytes.Buffer
+	png.Encode(&buf, img)
+	imgBase64Str := base64.StdEncoding.EncodeToString(buf.Bytes())
+	fmt.Printf("\x1b]1337;File=inline=1:%s\a\n", imgBase64Str)
+}
+
+func getImage(filePath string) image.Image {
+	imgFile, err := os.Open(filePath)
+	defer imgFile.Close()
+	if err != nil {
+		fmt.Println("Cannot read file:", err)
+	}
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		fmt.Println("Cannot decode file:", err)
+	}
+	return img
 }
