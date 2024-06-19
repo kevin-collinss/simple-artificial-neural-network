@@ -110,7 +110,7 @@ func sigmoidPrime(m mat.Matrix) mat.Matrix {
 }
 
 func save(net Network) {
-	h, err := os.Create("data/outputweights.model")
+	h, err := os.Create("data/hiddenweights.model")
 	defer h.Close()
 	if err == nil {
 		net.hiddenWeights.MarshalBinaryTo(h)
