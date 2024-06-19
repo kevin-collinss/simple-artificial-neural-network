@@ -28,7 +28,7 @@ To set up this project locally, follow these steps:
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/yourusername/simple-artificial-neural-network.git
+    git clone https://github.com/kevin-collinss/simple-artificial-neural-network.git
     cd simple-artificial-neural-network
     ```
 
@@ -54,7 +54,7 @@ To train the neural network using the MNIST dataset, use the following command:
 ```sh
 ./mlp.exe -mnist train
 ```
-
+![train](docs/README_images/train.png)
 Ensure you have the MNIST training data unzipped in the in the `mnist_dataset` directory.
 
 ## Prediction
@@ -64,7 +64,7 @@ To predict using the trained neural network, use the following command:
 ```sh
 ./mlp.exe -mnist predict
 ```
-![results](docs/README_images/results.png)
+![predict](docs/README_images/predict.png)
 
 ## Predicting Individual Files
 ```sh
